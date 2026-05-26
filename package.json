@@ -1,0 +1,26 @@
+{
+  "name": "llm-overlay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension: highlight any LLM response text + keybind to get a side-panel explanation grounded in the chat transcript.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.27",
+    "@types/chrome": "^0.0.270",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
