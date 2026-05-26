@@ -1,0 +1,110 @@
+:root {
+  color-scheme: light dark;
+  --fg: #1a1a1a;
+  --fg-muted: #555;
+  --bg: #fdfdfd;
+  --bg-elev: #f3f3f3;
+  --bg-card: #ffffff;
+  --border: #e3e3e3;
+  --accent: #5b6cff;
+  --warning-bg: #fff8e1;
+  --warning-fg: #6a4f00;
+  --warning-border: #f1d98a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e8e8e8;
+    --fg-muted: #a8a8a8;
+    --bg: #1a1a1c;
+    --bg-elev: #232326;
+    --bg-card: #26262a;
+    --border: #34343a;
+    --accent: #8a96ff;
+    --warning-bg: #3a2f10;
+    --warning-fg: #f3d378;
+    --warning-border: #5a4710;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+main {
+  max-width: 640px;
+  margin: 36px auto;
+  padding: 0 20px;
+}
+
+h1 { font-size: 22px; margin: 0 0 6px; }
+.sub { color: var(--fg-muted); margin: 0 0 20px; font-size: 13px; }
+
+.warn {
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border: 1px solid var(--warning-border);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  margin-bottom: 24px;
+}
+
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 0 0 18px;
+  background: var(--bg-card);
+}
+legend { padding: 0 6px; color: var(--fg-muted); font-size: 12.5px; }
+
+label {
+  display: block;
+  font-size: 12.5px;
+  margin-bottom: 6px;
+  color: var(--fg-muted);
+}
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+}
+input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button {
+  padding: 8px 14px;
+  background: var(--accent);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: default; }
+
+.status {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+a { color: var(--accent); }
