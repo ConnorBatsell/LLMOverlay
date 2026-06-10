@@ -1,11 +1,20 @@
 import type {
+  CapturePayload,
   ContentRequest,
   ContentResponse,
   PanelInbound,
   PanelOutbound,
+  Provider,
   QAEntry
 } from '../shared/messages';
-import { loadApiKeys, loadModelPrefs, loadTabHistory, saveTabHistory } from '../shared/storage';
+import {
+  loadApiKeys,
+  loadModelPrefs,
+  loadTabContext,
+  loadTabHistory,
+  saveTabContext,
+  saveTabHistory
+} from '../shared/storage';
 import { SYSTEM_PROMPT, buildUserMessage } from './promptBuilder';
 import { pickProvider, runStream } from './providerClient';
 import { startKeepAlive, stopKeepAlive } from './keepAlive';
@@ -65,8 +74,12 @@ chrome.runtime.onConnect.addListener(port => {
       if (msg.tabId != null) {
         const entries = await loadTabHistory(msg.tabId);
         if (entries.length) post(port, { type: 'rehydrate', entries });
+        const ctx = await loadTabContext(msg.tabId);
+        if (ctx) post(port, { type: 'context-set', highlight: ctx.selection });
         notePanelReady(msg.tabId);
       }
+    } else if (msg.type === 'ask') {
+      await handleAsk(msg.tabId, msg.question);
     } else if (msg.type === 'retry') {
       // Retry handled by user via re-triggering the chord; no-op for now.
       console.log('[llmOverlay] retry requested for', msg.id);
@@ -118,20 +131,67 @@ async function handleExplainCommand(tab?: chrome.tabs.Tab): Promise<void> {
     return;
   }
 
-  const { selection, messages, highlightTurnIndex } = captureRes.payload;
+  const payload = captureRes.payload;
+  await saveTabContext(activeTab.id, payload);
+  broadcast(activeTab.id, { type: 'context-set', highlight: payload.selection });
+
+  await runAnswer(activeTab.id, provider, payload, null);
+}
+
+async function handleAsk(tabId: number | null, question: string): Promise<void> {
+  if (tabId == null) return;
+  const q = question.trim();
+  if (!q) return;
+
+  const payload = await loadTabContext(tabId);
+  if (!payload) {
+    const entry: QAEntry = {
+      id: makeId(),
+      highlight: '',
+      question: q,
+      answer: '',
+      ts: Date.now(),
+      status: 'error',
+      error: 'Highlight a passage in the chat and press the shortcut before asking.'
+    };
+    broadcast(tabId, { type: 'qa-start', entry });
+    await persistAppend(tabId, entry);
+    return;
+  }
+
+  const provider = pickProvider(payload.host);
+  if (!provider) {
+    console.warn('[llmOverlay] unsupported host for ask', payload.host);
+    return;
+  }
+  await runAnswer(tabId, provider, payload, q);
+}
+
+async function runAnswer(
+  tabId: number,
+  provider: Provider,
+  payload: CapturePayload,
+  question: string | null
+): Promise<void> {
   const id = makeId();
   const entry: QAEntry = {
     id,
-    highlight: selection,
+    highlight: payload.selection,
+    question: question ?? undefined,
     answer: '',
     ts: Date.now(),
     status: 'streaming'
   };
-  await persistAppend(activeTab.id, entry);
-  await waitForPanel(activeTab.id);
-  broadcast(activeTab.id, { type: 'qa-start', entry });
+  await persistAppend(tabId, entry);
+  await waitForPanel(tabId);
+  broadcast(tabId, { type: 'qa-start', entry });
 
-  const userMessage = buildUserMessage(messages, selection, highlightTurnIndex);
+  const userMessage = buildUserMessage(
+    payload.messages,
+    payload.selection,
+    payload.highlightTurnIndex,
+    question ?? undefined
+  );
   const [keys, models] = await Promise.all([loadApiKeys(), loadModelPrefs()]);
 
   const ac = new AbortController();
@@ -149,19 +209,19 @@ async function handleExplainCommand(tab?: chrome.tabs.Tab): Promise<void> {
       signal: ac.signal,
       onDelta: text => {
         acc += text;
-        broadcast(activeTab.id!, { type: 'qa-delta', id, text });
+        broadcast(tabId, { type: 'qa-delta', id, text });
       }
     });
-    broadcast(activeTab.id, { type: 'qa-done', id });
-    await persistUpdate(activeTab.id, id, e => ({
+    broadcast(tabId, { type: 'qa-done', id });
+    await persistUpdate(tabId, id, e => ({
       ...e,
       answer: acc,
       status: 'done'
     }));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    broadcast(activeTab.id, { type: 'qa-error', id, error: msg });
-    await persistUpdate(activeTab.id, id, e => ({
+    broadcast(tabId, { type: 'qa-error', id, error: msg });
+    await persistUpdate(tabId, id, e => ({
       ...e,
       answer: acc,
       status: 'error',
@@ -224,5 +284,5 @@ async function persistUpdate(
 }
 
 chrome.tabs.onRemoved.addListener(async tabId => {
-  await chrome.storage.session.remove(`qa:tab:${tabId}`);
+  await chrome.storage.session.remove([`qa:tab:${tabId}`, `ctx:tab:${tabId}`]);
 });

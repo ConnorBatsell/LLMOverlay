@@ -93,6 +93,12 @@ html, body, #root {
   white-space: pre-wrap;
   word-break: break-word;
 }
+.entry__question {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
 .entry__answer {
   white-space: pre-wrap;
   word-break: break-word;
@@ -128,3 +134,72 @@ html, body, #root {
   cursor: pointer;
 }
 .entry__copy:hover { background: var(--bg-elev); }
+
+.composer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.composer__context {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  min-width: 0;
+}
+.composer__context-label {
+  flex: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+.composer__context-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid var(--accent);
+  padding-left: 6px;
+}
+.composer__row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.composer__input {
+  flex: 1;
+  resize: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.composer__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.composer__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.composer__send {
+  flex: none;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.composer__send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

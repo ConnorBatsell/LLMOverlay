@@ -34,6 +34,8 @@ export type ContentResponse =
 export interface QAEntry {
   id: string;
   highlight: string;
+  /** The specific question asked about the highlight, if any. Absent for a plain "explain" request. */
+  question?: string;
   answer: string;
   ts: number;
   status: 'streaming' | 'done' | 'error';
@@ -45,9 +47,11 @@ export type PanelInbound =
   | { type: 'qa-delta'; id: string; text: string }
   | { type: 'qa-done'; id: string }
   | { type: 'qa-error'; id: string; error: string }
-  | { type: 'rehydrate'; entries: QAEntry[] };
+  | { type: 'rehydrate'; entries: QAEntry[] }
+  | { type: 'context-set'; highlight: string };
 
 export type PanelOutbound =
   | { type: 'panel-ready'; tabId: number | null }
   | { type: 'heartbeat' }
+  | { type: 'ask'; tabId: number | null; question: string }
   | { type: 'retry'; id: string };

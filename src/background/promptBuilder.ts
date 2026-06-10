@@ -3,18 +3,33 @@ import type { ChatMessage } from '../shared/messages';
 const MAX_TRANSCRIPT_CHARS = 24_000;
 
 export const SYSTEM_PROMPT =
-  'You are an inline explainer. The user is reading an LLM chat transcript and ' +
-  'has highlighted a passage. Explain or expand on that passage using the ' +
-  'preceding conversation as context. Be concise and concrete. If the highlight ' +
-  'is ambiguous, state your interpretation. Do not invent facts not implied by ' +
-  'the transcript or general knowledge.';
+  'You are an inline explainer and Q&A assistant. The user is reading an LLM chat ' +
+  'transcript and has highlighted a passage. When the user asks a specific question, ' +
+  'answer that question about the highlighted passage, using the preceding ' +
+  'conversation as context. When no question is given, explain or expand on the ' +
+  'highlighted passage. Be concise and concrete. If the highlight is ambiguous, ' +
+  'state your interpretation. Do not invent facts not implied by the transcript or ' +
+  'general knowledge.';
 
 export function buildUserMessage(
   messages: ChatMessage[],
   highlight: string,
-  highlightTurnIndex: number | null
+  highlightTurnIndex: number | null,
+  question?: string
 ): string {
   const transcript = formatTranscript(truncateTurns(messages, highlightTurnIndex));
+  const q = question?.trim();
+  const instruction = q
+    ? [
+        `<question>${q.replace(/</g, '&lt;')}</question>`,
+        '',
+        'Answer the question above specifically about the highlighted passage. ' +
+          'Anchor your answer in the surrounding conversation; do not summarize the whole chat.'
+      ]
+    : [
+        'Explain or expand on the highlighted passage specifically. Anchor your answer ' +
+          'in the surrounding conversation; do not summarize the whole chat.'
+      ];
   return [
     '<transcript>',
     transcript,
@@ -22,7 +37,7 @@ export function buildUserMessage(
     '',
     `<highlight>"${highlight.replace(/"/g, '\\"')}"</highlight>`,
     '',
-    'Explain or expand on the highlighted passage specifically. Anchor your answer in the surrounding conversation; do not summarize the whole chat.'
+    ...instruction
   ].join('\n');
 }
 
