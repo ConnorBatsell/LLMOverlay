@@ -55,3 +55,4 @@ API keys live in `chrome.storage.local`, which is **not encrypted**. Any other e
 ## Non-goals (v1)
 
 Firefox, Safari, mobile, sites other than chatgpt.com / claude.ai, mixed-provider queries, cross-device sync, image/file/voice handling.
+1212
