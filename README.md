@@ -1,6 +1,6 @@
 # llmOverlay
 
-A Chrome extension that adds a "highlight → explain in a side panel" workflow to **chatgpt.com** and **claude.ai**, without polluting the main chat thread.
+A Chrome extension that adds a "highlight → explain in a side panel" workflow to **chatgpt.com** and **claude.ai**, without polluting the main chat thread
 
 ## Workflow
 
