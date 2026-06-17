@@ -1,10 +1,10 @@
 # llmOverlay
 
-A Chrome extension that adds a "highlight → explain in a side panel" workflow to **chatgpt.com** and **claude.ai**, without polluting the main chat thread
+A Chrome extension that adds a "highlight → explain in a side panel" workflow to **chatgpt.com** and **claude.ai**, without polluting the main chat thread.
 
 ## Workflow
 
-1. Open a chat in chatgpt.com or claude.ai.
+1. Open a chat in chatgpt.com or claude.ai
 2. Highlight any word or phrase in an assistant's reply.
 3. Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> (mac) or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>.
 4. The Chrome side panel opens with a streamed explanation, grounded in the **full chat transcript** scraped from the page. The original chat is untouched.
