@@ -51,6 +51,19 @@ html, body, #root {
 }
 .app__title { font-weight: 600; font-size: 14px; }
 .app__hint  { font-size: 11.5px; color: var(--fg-muted); }
+.app__header-right { display: flex; align-items: center; gap: 10px; }
+.app__clear {
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+.app__clear:hover:not(:disabled) { color: var(--error); border-color: var(--error); }
+.app__clear:disabled { opacity: 0.4; cursor: default; }
 
 .app__list {
   flex: 1;

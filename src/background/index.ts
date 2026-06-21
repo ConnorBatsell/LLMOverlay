@@ -8,6 +8,7 @@ import type {
   QAEntry
 } from '../shared/messages';
 import {
+  clearTabHistory,
   loadApiKeys,
   loadModelPrefs,
   loadTabContext,
@@ -26,6 +27,7 @@ interface PanelConn {
 
 const panelConns = new Map<number, PanelConn>();
 const activeStreams = new Map<string, AbortController>();
+const streamTab = new Map<string, number>();
 const panelWaiters = new Map<number, Array<() => void>>();
 
 let panelSeq = 0;
@@ -80,6 +82,8 @@ chrome.runtime.onConnect.addListener(port => {
       }
     } else if (msg.type === 'ask') {
       await handleAsk(msg.tabId, msg.question);
+    } else if (msg.type === 'clear') {
+      await handleClear(msg.tabId);
     } else if (msg.type === 'retry') {
       // Retry handled by user via re-triggering the chord; no-op for now.
       console.log('[llmOverlay] retry requested for', msg.id);
@@ -203,6 +207,7 @@ async function runAnswer(
 
   const ac = new AbortController();
   activeStreams.set(id, ac);
+  streamTab.set(id, tabId);
   startKeepAlive();
 
   let acc = '';
@@ -236,8 +241,19 @@ async function runAnswer(
     }));
   } finally {
     activeStreams.delete(id);
+    streamTab.delete(id);
     if (activeStreams.size === 0) stopKeepAlive();
   }
+}
+
+async function handleClear(tabId: number | null): Promise<void> {
+  if (tabId == null) return;
+  // Cancel any answer still streaming for this tab so it can't repopulate history.
+  for (const [id, t] of streamTab) {
+    if (t === tabId) activeStreams.get(id)?.abort();
+  }
+  await clearTabHistory(tabId);
+  broadcast(tabId, { type: 'cleared' });
 }
 
 async function sendCapture(tabId: number): Promise<ContentResponse> {

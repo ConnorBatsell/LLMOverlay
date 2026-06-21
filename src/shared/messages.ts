@@ -48,10 +48,12 @@ export type PanelInbound =
   | { type: 'qa-done'; id: string }
   | { type: 'qa-error'; id: string; error: string }
   | { type: 'rehydrate'; entries: QAEntry[] }
-  | { type: 'context-set'; highlight: string };
+  | { type: 'context-set'; highlight: string }
+  | { type: 'cleared' };
 
 export type PanelOutbound =
   | { type: 'panel-ready'; tabId: number | null }
   | { type: 'heartbeat' }
   | { type: 'ask'; tabId: number | null; question: string }
+  | { type: 'clear'; tabId: number | null }
   | { type: 'retry'; id: string };

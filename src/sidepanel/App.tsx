@@ -56,11 +56,27 @@ export function App() {
     }
   };
 
+  const clearHistory = () => {
+    setEntries([]);
+    portRef.current?.send({ type: 'clear', tabId: tabIdRef.current });
+  };
+
   return (
     <div className="app">
       <header className="app__header">
         <span className="app__title">llmOverlay</span>
-        <span className="app__hint">Cmd/Ctrl+Shift+E to capture</span>
+        <div className="app__header-right">
+          <span className="app__hint">Cmd/Ctrl+Shift+E to capture</span>
+          <button
+            className="app__clear"
+            type="button"
+            onClick={clearHistory}
+            disabled={entries.length === 0}
+            title="Clear all chat history in this panel"
+          >
+            Clear
+          </button>
+        </div>
       </header>
       <div className="app__list" ref={listRef}>
         {entries.length === 0 ? <EmptyState /> : entries.map(e => <Entry key={e.id} entry={e} />)}
@@ -104,6 +120,8 @@ function apply(prev: QAEntry[], msg: PanelInbound): QAEntry[] {
   switch (msg.type) {
     case 'rehydrate':
       return msg.entries;
+    case 'cleared':
+      return [];
     case 'qa-start':
       return prev.some(e => e.id === msg.entry.id) ? prev : [...prev, msg.entry];
     case 'qa-delta': {
