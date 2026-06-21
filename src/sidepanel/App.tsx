@@ -135,8 +135,9 @@ function EmptyState() {
       <div style={{ marginBottom: 6, color: 'var(--fg)' }}>Nothing yet.</div>
       Open <strong>chatgpt.com</strong> or <strong>claude.ai</strong>, highlight a phrase
       in an assistant reply, then press <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>.
-      An explanation streams in here, and you can ask follow-up questions about the
-      highlight in the box below — all without touching the chat thread.
+      The highlight lands in the box below — type a specific question about it to get an
+      answer. The docker keeps the full chat context and everything you've asked, so each
+      follow-up builds on the last — all without touching the chat thread.
     </div>
   );
 }

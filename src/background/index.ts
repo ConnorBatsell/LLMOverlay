@@ -133,9 +133,10 @@ async function handleExplainCommand(tab?: chrome.tabs.Tab): Promise<void> {
 
   const payload = captureRes.payload;
   await saveTabContext(activeTab.id, payload);
+  // Drop the highlight into the panel as context, then wait for the user to ask a
+  // specific question. The transcript + prior Q&A stay available for that answer.
+  await waitForPanel(activeTab.id);
   broadcast(activeTab.id, { type: 'context-set', highlight: payload.selection });
-
-  await runAnswer(activeTab.id, provider, payload, null);
 }
 
 async function handleAsk(tabId: number | null, question: string): Promise<void> {
@@ -164,14 +165,19 @@ async function handleAsk(tabId: number | null, question: string): Promise<void> 
     console.warn('[llmOverlay] unsupported host for ask', payload.host);
     return;
   }
-  await runAnswer(tabId, provider, payload, q);
+  // Carry forward everything already discussed in this docker so the answer stays
+  // coherent across follow-ups and across multiple highlights.
+  const history = await loadTabHistory(tabId);
+  const priorQA = history.filter(e => e.status === 'done' && e.answer);
+  await runAnswer(tabId, provider, payload, q, priorQA);
 }
 
 async function runAnswer(
   tabId: number,
   provider: Provider,
   payload: CapturePayload,
-  question: string | null
+  question: string | null,
+  priorQA: QAEntry[] = []
 ): Promise<void> {
   const id = makeId();
   const entry: QAEntry = {
@@ -190,7 +196,8 @@ async function runAnswer(
     payload.messages,
     payload.selection,
     payload.highlightTurnIndex,
-    question ?? undefined
+    question ?? undefined,
+    priorQA
   );
   const [keys, models] = await Promise.all([loadApiKeys(), loadModelPrefs()]);
 
