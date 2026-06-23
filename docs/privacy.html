@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>llmOverlay — Privacy Policy</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a1a2e; background: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e6e6f0; background: #14141f; }
+      code { background: #26263a; }
+      a { color: #a78bfa; }
+    }
+    h1 { font-size: 1.9rem; margin-bottom: .25rem; }
+    h2 { margin-top: 2rem; border-bottom: 1px solid #8b5cf633; padding-bottom: .3rem; }
+    .updated { color: #6b6b85; font-size: .9rem; }
+    code { background: #f0f0f7; padding: .1em .35em; border-radius: 4px; font-size: .9em; }
+    a { color: #6d28d9; }
+    ul { padding-left: 1.4rem; }
+    li { margin: .35rem 0; }
+  </style>
+</head>
+<body>
+  <h1>llmOverlay — Privacy Policy</h1>
+  <p class="updated">Last updated: 2026-06-23</p>
+
+  <p>llmOverlay is a Chrome extension that lets you highlight text inside an LLM chat
+  (ChatGPT or Claude) and get a side-panel explanation grounded in that conversation.
+  This policy explains exactly what data the extension touches and where it goes.</p>
+
+  <h2>Summary</h2>
+  <ul>
+    <li>llmOverlay has <strong>no backend server of its own.</strong> It does not collect,
+      transmit, or sell your data to the developer.</li>
+    <li>The only network requests it makes are <strong>directly from your browser to the
+      LLM provider you configured</strong> — Anthropic (<code>api.anthropic.com</code>) or
+      OpenAI (<code>api.openai.com</code>) — using <strong>your own API key.</strong></li>
+    <li>Everything else stays <strong>on your device</strong> in Chrome's extension storage.</li>
+  </ul>
+
+  <h2>What data is processed</h2>
+  <p>When you trigger an explanation (keyboard shortcut or the side-panel question box),
+  the extension reads, from the active ChatGPT/Claude tab:</p>
+  <ul>
+    <li>the <strong>passage you highlighted</strong>,</li>
+    <li>the <strong>surrounding chat transcript</strong> (truncated to roughly 24,000 characters),</li>
+    <li>your <strong>typed question</strong>, if any, and recent prior questions/answers in that tab's session.</li>
+  </ul>
+  <p>This content is sent <strong>only</strong> to the LLM provider's API to generate the answer.</p>
+
+  <h2>What is stored, and where</h2>
+  <ul>
+    <li><strong>API keys</strong> — stored in <code>chrome.storage.local</code> on your device
+      so the extension can authenticate to the provider. They are never sent anywhere except
+      to that provider's API as the <code>Authorization</code> header.</li>
+    <li><strong>Question/answer history and the captured highlight + transcript</strong> —
+      stored in <code>chrome.storage.session</code>, which Chrome clears automatically when
+      the browser closes. The in-panel <strong>Clear</strong> button wipes it on demand.</li>
+  </ul>
+  <p>No data is written to any remote database, analytics service, or developer-operated server.</p>
+
+  <h2>Third-party processing</h2>
+  <p>Text you submit for explanation is processed by whichever provider you choose:</p>
+  <ul>
+    <li><strong>Anthropic</strong> — <a href="https://www.anthropic.com/legal/privacy">anthropic.com/legal/privacy</a></li>
+    <li><strong>OpenAI</strong> — <a href="https://openai.com/policies/privacy-policy">openai.com/policies/privacy-policy</a></li>
+  </ul>
+  <p>Their handling of that data is governed by their own policies and your account settings with them.</p>
+
+  <h2>What the extension does NOT do</h2>
+  <ul>
+    <li>No analytics, telemetry, tracking, or advertising.</li>
+    <li>No selling or sharing of data with third parties (beyond the provider API call you initiate).</li>
+    <li>No access to pages other than <code>chatgpt.com</code> and <code>claude.ai</code>.</li>
+  </ul>
+
+  <h2>Permissions</h2>
+  <p>Permissions are scoped to reading the active LLM chat tab, storing your settings and
+  session history locally, and calling the two provider APIs. Each permission is justified
+  in detail in the extension's store listing.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: <a href="mailto:jbatsell65@gmail.com">jbatsell65@gmail.com</a></p>
+</body>
+</html>

@@ -7,6 +7,11 @@ export default defineManifest({
   version: pkg.version,
   description: pkg.description,
   minimum_chrome_version: '116',
+  icons: {
+    16: 'icons/icon16.png',
+    48: 'icons/icon48.png',
+    128: 'icons/icon128.png'
+  },
   permissions: ['sidePanel', 'storage', 'activeTab', 'alarms', 'tabs'],
   host_permissions: [
     'https://api.anthropic.com/*',
@@ -31,7 +36,12 @@ export default defineManifest({
     open_in_tab: true
   },
   action: {
-    default_title: 'llmOverlay — open side panel'
+    default_title: 'llmOverlay — open side panel',
+    default_icon: {
+      16: 'icons/icon16.png',
+      48: 'icons/icon48.png',
+      128: 'icons/icon128.png'
+    }
   },
   commands: {
     'explain-selection': {
