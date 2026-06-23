@@ -11,15 +11,16 @@ The upload package is built at repo root: **`llmOverlay-0.1.0.zip`**
    - Store icon 128×128 (reuse `public/icons/icon128.png`).
    - At least one 1280×800 or 640×400 screenshot (see below).
 4. **Privacy practices** tab — paste the single purpose, permission justifications,
-   tick the data-usage boxes, answer "No remote code", and paste your privacy
-   policy URL (host `store-assets/PRIVACY.md` publicly first — easiest is GitHub
-   Pages or the raw file URL).
+   tick the data-usage boxes, answer "No remote code", and paste the privacy
+   policy URL: https://connorbatsell.github.io/LLMOverlay/privacy.html (already
+   live via GitHub Pages from `docs/`).
 5. **Distribution** — choose visibility (Public/Unlisted), free, all regions.
 6. **Save draft → Submit for review.**
 
 ## You still have to do by hand (can't be automated here)
 - [ ] Take 1+ screenshots of the panel in action (1280×800).
-- [ ] Host PRIVACY.md at a public URL and put that URL in the listing.
+- [x] ~~Host the privacy policy publicly~~ — live at
+      https://connorbatsell.github.io/LLMOverlay/privacy.html
 - [ ] Confirm the API-key options page works after a fresh install.
 
 ## Smoke-test before submitting

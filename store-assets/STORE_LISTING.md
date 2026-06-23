@@ -34,7 +34,7 @@ Privacy
 llmOverlay has no server of its own. Your highlighted text and the chat transcript
 are sent only to the provider you configured (Anthropic or OpenAI), using your own
 API key. API keys and history stay in your browser. Full policy:
-_<your hosted PRIVACY.md URL>_
+https://connorbatsell.github.io/LLMOverlay/privacy.html
 
 You need your own Anthropic or OpenAI API key, entered on the extension's options page.
 
@@ -92,8 +92,7 @@ explanation of that passage in a side panel.
 No. All executable code is bundled in the package; no remote scripts are loaded.
 
 ### Privacy policy URL
-_Host store-assets/PRIVACY.md somewhere public (e.g. a GitHub Pages URL or the raw
-GitHub file) and paste that link here._
+https://connorbatsell.github.io/LLMOverlay/privacy.html
 
 ---
 
