@@ -9,16 +9,17 @@ interface CachedSelection {
 
 let cache: CachedSelection | null = null;
 
-export function installSelectionCache(adapter: SiteAdapter): void {
+export function installSelectionCache(adapter: SiteAdapter | null): void {
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
     const text = sel.toString().trim();
     if (!text) return;
     const anchor = sel.anchorNode;
-    if (!anchor) return;
-    const fromAssistant = adapter.isAssistantNode(anchor);
-    const turnIndex = adapter.findTurnIndex(anchor);
+    // Turn/role info only exists on known chat sites; elsewhere the selection is
+    // still cached so it can be asked about as plain highlighted text.
+    const fromAssistant = anchor && adapter ? adapter.isAssistantNode(anchor) : false;
+    const turnIndex = anchor && adapter ? adapter.findTurnIndex(anchor) : null;
     cache = { text, turnIndex, fromAssistant, ts: Date.now() };
   }, { passive: true });
 }
