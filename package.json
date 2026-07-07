@@ -2,7 +2,7 @@
   "name": "llm-overlay",
   "version": "0.1.0",
   "private": true,
-  "description": "Chrome extension: highlight any LLM response text + keybind to get a side-panel explanation grounded in the chat transcript.",
+  "description": "Chrome extension: on any web page, highlight text (or just open the panel) and ask questions in a side panel grounded in the whole page's content.",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,22 +1,24 @@
 # llmOverlay
 
-A Chrome extension that adds a "highlight → explain in a side panel" workflow to **chatgpt.com** and **claude.ai**, without polluting the main chat thread.
+A Chrome extension that adds an "ask about this page in a side panel" workflow to **any web page**, without leaving the page you're reading.
 
 ## Workflow
 
-1. Open a chat in chatgpt.com or claude.ai.
-2. Highlight any word or phrase in an assistant's reply
-3. Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> (mac) or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>.
-4. The Chrome side panel opens with a streamed explanation, grounded in the **full chat transcript** scraped from the page. The original chat is untouched.
+1. Open any web page.
+2. Open the side panel (click the extension's toolbar icon). It reads the page so you can ask about it right away.
+3. Type a question about the page — or highlight a passage first and press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> (mac) / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> to focus the answer on that passage.
+4. The answer streams into the side panel, grounded in the page's content. On **chatgpt.com** and **claude.ai** the structured chat transcript is used instead of raw page text for cleaner context.
 
 The side panel keeps a running list of every Q&A from the current tab, persisted to `chrome.storage.session` so the list survives a panel reload but is dropped when the tab closes.
 
 ## Provider routing
 
-| Site | API |
+The provider no longer depends on the site you're on. Pick a default in **Options**; requests go there, falling back to whichever key is set:
+
+| Provider | API |
 |---|---|
-| `claude.ai` | Anthropic — `POST /v1/messages` |
-| `chatgpt.com` | OpenAI — `POST /v1/chat/completions` |
+| Anthropic | `POST /v1/messages` |
+| OpenAI | `POST /v1/chat/completions` |
 
 Both calls are streamed (SSE) from the background service worker. Content scripts never see API keys.
 
@@ -54,5 +56,4 @@ API keys live in `chrome.storage.local`, which is **not encrypted**. Any other e
 
 ## Non-goals (v1)
 
-Firefox, Safari, mobile, sites other than chatgpt.com / claude.ai, mixed-provider queries, cross-device sync, image/file/voice handling.
-1212
+Firefox, Safari, mobile, mixed-provider queries, cross-device sync, image/file/voice handling. (Runs on `chrome://`, extension, and other non-http(s) pages are not supported — the content script can't be injected there.)
