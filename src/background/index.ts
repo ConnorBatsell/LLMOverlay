@@ -17,7 +17,7 @@ import {
   saveTabHistory
 } from '../shared/storage';
 import { SYSTEM_PROMPT, buildUserMessage } from './promptBuilder';
-import { pickProvider, runStream } from './providerClient';
+import { resolveProvider, runStream } from './providerClient';
 import { startKeepAlive, stopKeepAlive } from './keepAlive';
 
 interface PanelConn {
@@ -76,8 +76,17 @@ chrome.runtime.onConnect.addListener(port => {
       if (msg.tabId != null) {
         const entries = await loadTabHistory(msg.tabId);
         if (entries.length) post(port, { type: 'rehydrate', entries });
-        const ctx = await loadTabContext(msg.tabId);
-        if (ctx) post(port, { type: 'context-set', highlight: ctx.selection });
+        // Reuse a stored context if we have one; otherwise read the page the
+        // panel just opened over so you can ask about it without highlighting.
+        const ctx = (await loadTabContext(msg.tabId)) ?? (await autoCapture(msg.tabId));
+        if (ctx) {
+          post(port, {
+            type: 'context-set',
+            highlight: ctx.selection,
+            pageTitle: ctx.page.title,
+            hasSelection: !!ctx.selection
+          });
+        }
         notePanelReady(msg.tabId);
       }
     } else if (msg.type === 'ask') {
@@ -106,10 +115,8 @@ async function handleExplainCommand(tab?: chrome.tabs.Tab): Promise<void> {
     console.warn('[llmOverlay] no active tab');
     return;
   }
-  const host = new URL(activeTab.url).hostname;
-  const provider = pickProvider(host);
-  if (!provider) {
-    console.warn('[llmOverlay] unsupported host', host);
+  if (!isCapturablePage(activeTab.url)) {
+    console.warn('[llmOverlay] cannot run on this page', activeTab.url);
     return;
   }
 
@@ -137,10 +144,34 @@ async function handleExplainCommand(tab?: chrome.tabs.Tab): Promise<void> {
 
   const payload = captureRes.payload;
   await saveTabContext(activeTab.id, payload);
-  // Drop the highlight into the panel as context, then wait for the user to ask a
-  // specific question. The transcript + prior Q&A stay available for that answer.
+  // Set the panel's focus (the highlight if any, else the whole page), then wait
+  // for the user to ask. The page content + prior Q&A stay available for answers.
   await waitForPanel(activeTab.id);
-  broadcast(activeTab.id, { type: 'context-set', highlight: payload.selection });
+  broadcast(activeTab.id, {
+    type: 'context-set',
+    highlight: payload.selection,
+    pageTitle: payload.page.title,
+    hasSelection: !!payload.selection
+  });
+}
+
+/** Content scripts only run on http(s); skip chrome://, extension, file, etc. pages. */
+function isCapturablePage(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+/** Read the page a freshly-opened panel is sitting over, and remember it. */
+async function autoCapture(tabId: number): Promise<CapturePayload | null> {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab.url || !isCapturablePage(tab.url)) return null;
+    const res = await sendCapture(tabId);
+    if (res.type !== 'capture-result') return null;
+    await saveTabContext(tabId, res.payload);
+    return res.payload;
+  } catch {
+    return null;
+  }
 }
 
 async function handleAsk(tabId: number | null, question: string): Promise<void> {
@@ -150,23 +181,22 @@ async function handleAsk(tabId: number | null, question: string): Promise<void> 
 
   const payload = await loadTabContext(tabId);
   if (!payload) {
-    const entry: QAEntry = {
-      id: makeId(),
-      highlight: '',
-      question: q,
-      answer: '',
-      ts: Date.now(),
-      status: 'error',
-      error: 'Highlight a passage in the chat and press the shortcut before asking.'
-    };
-    broadcast(tabId, { type: 'qa-start', entry });
-    await persistAppend(tabId, entry);
+    await emitAskError(
+      tabId,
+      q,
+      'Open the panel on a page (or press the shortcut) so I can read it before you ask.'
+    );
     return;
   }
 
-  const provider = pickProvider(payload.host);
+  const [keys, models] = await Promise.all([loadApiKeys(), loadModelPrefs()]);
+  const provider = resolveProvider(models, keys);
   if (!provider) {
-    console.warn('[llmOverlay] unsupported host for ask', payload.host);
+    await emitAskError(
+      tabId,
+      q,
+      'No API key set. Add an Anthropic or OpenAI key in the extension Options.'
+    );
     return;
   }
   // Carry forward everything already discussed in this docker so the answer stays
@@ -197,7 +227,7 @@ async function runAnswer(
   broadcast(tabId, { type: 'qa-start', entry });
 
   const userMessage = buildUserMessage(
-    payload.messages,
+    payload.page,
     payload.selection,
     payload.highlightTurnIndex,
     question ?? undefined,
@@ -286,6 +316,20 @@ function broadcast(tabId: number, msg: PanelInbound): void {
 
 function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function emitAskError(tabId: number, question: string, error: string): Promise<void> {
+  const entry: QAEntry = {
+    id: makeId(),
+    highlight: '',
+    question,
+    answer: '',
+    ts: Date.now(),
+    status: 'error',
+    error
+  };
+  broadcast(tabId, { type: 'qa-start', entry });
+  await persistAppend(tabId, entry);
 }
 
 async function persistAppend(tabId: number, entry: QAEntry): Promise<void> {
