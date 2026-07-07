@@ -7,9 +7,17 @@ const DEFAULT_MODELS: Record<Provider, string> = {
   openai: 'gpt-4o-mini'
 };
 
-export function pickProvider(host: string): Provider | null {
-  if (host.endsWith('claude.ai')) return 'anthropic';
-  if (host.endsWith('chatgpt.com')) return 'openai';
+/**
+ * Choose the provider to send the request to. It no longer depends on which
+ * site you're on (the extension runs everywhere now): honor the user's default
+ * provider when its key is set, otherwise fall back to whichever key exists.
+ */
+export function resolveProvider(prefs: ModelPrefs, keys: ApiKeys): Provider | null {
+  const pref = prefs.defaultProvider;
+  if (pref === 'anthropic' && keys.anthropic) return 'anthropic';
+  if (pref === 'openai' && keys.openai) return 'openai';
+  if (keys.anthropic) return 'anthropic';
+  if (keys.openai) return 'openai';
   return null;
 }
 

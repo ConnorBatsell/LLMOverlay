@@ -1,50 +1,74 @@
-import type { ChatMessage, QAEntry } from '../shared/messages';
+import type { ChatMessage, PageContext, QAEntry } from '../shared/messages';
 
 const MAX_TRANSCRIPT_CHARS = 24_000;
+const MAX_PAGE_CHARS = 24_000;
 const MAX_PRIOR_QA = 6;
 const MAX_PRIOR_ANSWER_CHARS = 1_500;
 
 export const SYSTEM_PROMPT =
-  'You are an inline explainer and Q&A assistant. The user is reading an LLM chat ' +
-  'transcript and has highlighted a passage. When the user asks a specific question, ' +
-  'answer that question about the highlighted passage, using the preceding ' +
-  'conversation and any prior discussion (earlier questions and answers in this ' +
-  'session) as context. When no question is given, explain or expand on the ' +
-  'highlighted passage. Be concise and concrete. If the highlight is ambiguous, ' +
-  'state your interpretation. Do not invent facts not implied by the transcript or ' +
-  'general knowledge.';
+  'You are a browsing assistant embedded in the user\'s web browser. The user is reading a web ' +
+  'page; you are given its title, URL, and extracted text, and sometimes a passage the user has ' +
+  'highlighted. First familiarize yourself with the page, then answer the user\'s question. If a ' +
+  'highlight is present, focus your answer on it and use the rest of the page as context. If no ' +
+  'highlight is present, answer about the page as a whole. Use earlier questions and answers in ' +
+  'this session as context for follow-ups. Be concise and concrete. If something is ambiguous, ' +
+  'state your interpretation. Do not invent facts that are not supported by the page or by general ' +
+  'knowledge.';
 
 export function buildUserMessage(
-  messages: ChatMessage[],
+  page: PageContext,
   highlight: string,
   highlightTurnIndex: number | null,
   question?: string,
   priorQA: QAEntry[] = []
 ): string {
-  const transcript = formatTranscript(truncateTurns(messages, highlightTurnIndex));
+  const body =
+    page.messages && page.messages.length
+      ? formatTranscript(truncateTurns(page.messages, highlightTurnIndex))
+      : truncateText(page.text, MAX_PAGE_CHARS);
+
   const q = question?.trim();
-  const instruction = q
-    ? [
-        `<question>${q.replace(/</g, '&lt;')}</question>`,
-        '',
-        'Answer the question above specifically about the highlighted passage. ' +
-          'Anchor your answer in the surrounding conversation and in the prior ' +
-          'discussion above; do not summarize the whole chat.'
-      ]
-    : [
-        'Explain or expand on the highlighted passage specifically. Anchor your answer ' +
-          'in the surrounding conversation; do not summarize the whole chat.'
-      ];
+  const hasHighlight = !!highlight.trim();
+
+  const instruction = buildInstruction(q, hasHighlight);
+
   return [
-    '<transcript>',
-    transcript,
-    '</transcript>',
+    `<page title="${escapeAttr(page.title)}" url="${escapeAttr(page.url)}">`,
+    body,
+    '</page>',
     '',
     ...formatPriorDiscussion(priorQA),
-    `<highlight>"${highlight.replace(/"/g, '\\"')}"</highlight>`,
-    '',
+    ...(hasHighlight
+      ? [`<highlight>"${highlight.replace(/"/g, '\\"')}"</highlight>`, '']
+      : []),
     ...instruction
   ].join('\n');
+}
+
+function buildInstruction(question: string | undefined, hasHighlight: boolean): string[] {
+  if (question) {
+    const q = `<question>${question.replace(/</g, '&lt;')}</question>`;
+    if (hasHighlight) {
+      return [
+        q,
+        '',
+        'Answer the question above about the highlighted passage. Anchor your answer in the ' +
+          'surrounding page content and the prior discussion; do not summarize the whole page.'
+      ];
+    }
+    return [
+      q,
+      '',
+      'Answer the question above using the page content above and the prior discussion.'
+    ];
+  }
+  if (hasHighlight) {
+    return [
+      'Explain or expand on the highlighted passage specifically. Anchor your answer in the ' +
+        'surrounding page content; do not summarize the whole page.'
+    ];
+  }
+  return ['Briefly summarize what this page is and its key points.'];
 }
 
 function formatPriorDiscussion(priorQA: QAEntry[]): string[] {
@@ -56,7 +80,9 @@ function formatPriorDiscussion(priorQA: QAEntry[]): string[] {
       : e.answer;
     const head = e.question?.trim()
       ? `Q: ${e.question.trim()}`
-      : `Highlighted: "${e.highlight}"`;
+      : e.highlight
+        ? `Highlighted: "${e.highlight}"`
+        : 'About the page:';
     return `${head}\nA: ${answer}`;
   });
   return ['<prior_discussion>', blocks.join('\n\n'), '</prior_discussion>', ''];
@@ -66,6 +92,14 @@ function formatTranscript(messages: ChatMessage[]): string {
   return messages
     .map(m => `${m.role.toUpperCase()}: ${m.content}`)
     .join('\n\n');
+}
+
+function truncateText(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max) + '\n…[truncated]' : text;
+}
+
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
 function truncateTurns(messages: ChatMessage[], pinIndex: number | null): ChatMessage[] {
