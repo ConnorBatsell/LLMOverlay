@@ -2,9 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { PanelInbound, QAEntry } from '../shared/messages';
 import { connectPanel, getActiveTabId, type PanelPort } from './api';
 
+interface PanelContext {
+  highlight: string;
+  pageTitle: string;
+  hasSelection: boolean;
+}
+
 export function App() {
   const [entries, setEntries] = useState<QAEntry[]>([]);
-  const [highlight, setHighlight] = useState<string | null>(null);
+  const [context, setContext] = useState<PanelContext | null>(null);
   const [question, setQuestion] = useState('');
   const tabIdRef = useRef<number | null>(null);
   const portRef = useRef<PanelPort | null>(null);
@@ -15,7 +21,11 @@ export function App() {
 
     const port = connectPanel((msg: PanelInbound) => {
       if (msg.type === 'context-set') {
-        setHighlight(msg.highlight);
+        setContext({
+          highlight: msg.highlight,
+          pageTitle: msg.pageTitle,
+          hasSelection: msg.hasSelection
+        });
         return;
       }
       setEntries(prev => apply(prev, msg));
@@ -44,7 +54,7 @@ export function App() {
 
   const submit = () => {
     const q = question.trim();
-    if (!q || !highlight || !portRef.current) return;
+    if (!q || !context || !portRef.current) return;
     portRef.current.send({ type: 'ask', tabId: tabIdRef.current, question: q });
     setQuestion('');
   };
@@ -80,7 +90,7 @@ export function App() {
         </button>
       </header>
       <div className="app__options-bar">
-        <span className="app__hint">Cmd/Ctrl+Shift+E to capture</span>
+        <span className="app__hint">Cmd/Ctrl+Shift+E to capture a highlight</span>
         <button
           className="app__options"
           type="button"
@@ -94,10 +104,17 @@ export function App() {
         {entries.length === 0 ? <EmptyState /> : entries.map(e => <Entry key={e.id} entry={e} />)}
       </div>
       <div className="composer">
-        {highlight && (
-          <div className="composer__context" title={highlight}>
-            <span className="composer__context-label">Asking about</span>
-            <span className="composer__context-text">{highlight}</span>
+        {context && (
+          <div
+            className="composer__context"
+            title={context.hasSelection ? context.highlight : context.pageTitle}
+          >
+            <span className="composer__context-label">
+              {context.hasSelection ? 'Asking about' : 'Asking about this page'}
+            </span>
+            <span className="composer__context-text">
+              {context.hasSelection ? context.highlight : context.pageTitle}
+            </span>
           </div>
         )}
         <div className="composer__row">
@@ -107,18 +124,20 @@ export function App() {
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={onKeyDown}
             rows={2}
-            disabled={!highlight}
+            disabled={!context}
             placeholder={
-              highlight
-                ? 'Ask a question about the highlight…'
-                : 'Highlight text in the chat, then press Cmd/Ctrl+Shift+E'
+              context
+                ? context.hasSelection
+                  ? 'Ask a question about the highlight…'
+                  : 'Ask a question about this page…'
+                : 'Open a web page, then press Cmd/Ctrl+Shift+E'
             }
           />
           <button
             className="composer__send"
             type="button"
             onClick={submit}
-            disabled={!highlight || !question.trim()}
+            disabled={!context || !question.trim()}
           >
             Ask
           </button>
@@ -163,11 +182,11 @@ function EmptyState() {
   return (
     <div className="empty">
       <div style={{ marginBottom: 6, color: 'var(--fg)' }}>Nothing yet.</div>
-      Open <strong>chatgpt.com</strong> or <strong>claude.ai</strong>, highlight a phrase
-      in an assistant reply, then press <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>.
-      The highlight lands in the box below — type a specific question about it to get an
-      answer. The docker keeps the full chat context and everything you've asked, so each
-      follow-up builds on the last — all without touching the chat thread.
+      Works on <strong>any web page</strong>. Just open this panel and ask a question about
+      the page in the box below — or highlight a passage and press{' '}
+      <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> to focus on it. The panel reads
+      the page for context and remembers everything you've asked, so each follow-up builds on
+      the last.
     </div>
   );
 }
