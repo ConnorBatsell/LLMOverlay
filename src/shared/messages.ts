@@ -15,12 +15,25 @@ export interface ApiKeys {
 export interface ModelPrefs {
   anthropicModel?: string;
   openaiModel?: string;
+  /** Which provider to send requests to, regardless of which site you're on. */
+  defaultProvider?: Provider;
+}
+
+/** A snapshot of the web page the user is on, used to ground the answer. */
+export interface PageContext {
+  title: string;
+  url: string;
+  host: string;
+  /** Readable text extracted from the page. */
+  text: string;
+  /** Structured chat turns, present only when a known chat site (ChatGPT/Claude) matched. */
+  messages?: ChatMessage[];
 }
 
 export interface CapturePayload {
+  /** The highlighted passage, or '' when the user is asking about the whole page. */
   selection: string;
-  messages: ChatMessage[];
-  host: string;
+  page: PageContext;
   highlightTurnIndex: number | null;
 }
 
@@ -48,7 +61,7 @@ export type PanelInbound =
   | { type: 'qa-done'; id: string }
   | { type: 'qa-error'; id: string; error: string }
   | { type: 'rehydrate'; entries: QAEntry[] }
-  | { type: 'context-set'; highlight: string }
+  | { type: 'context-set'; highlight: string; pageTitle: string; hasSelection: boolean }
   | { type: 'cleared' };
 
 export type PanelOutbound =
