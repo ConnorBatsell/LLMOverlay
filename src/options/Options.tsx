@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   loadApiKeys, saveApiKeys, loadModelPrefs, saveModelPrefs
 } from '../shared/storage';
-import type { ApiKeys, ModelPrefs } from '../shared/messages';
+import type { ApiKeys, ModelPrefs, Provider } from '../shared/messages';
 
 const DEFAULTS = {
   anthropicModel: 'claude-sonnet-4-6',
@@ -40,7 +40,8 @@ export function Options() {
     <main>
       <h1>llmOverlay — Options</h1>
       <p className="sub">
-        Configure API keys for the providers used on each site. Keys are stored locally in this
+        Add an API key and pick which provider answers your questions. The extension works on any
+        web page; requests go to the provider you choose below. Keys are stored locally in this
         browser profile.
       </p>
 
@@ -54,7 +55,7 @@ export function Options() {
         <fieldset>
           <legend>API keys</legend>
           <div className="field">
-            <label htmlFor="anthropic">Anthropic API key (used on claude.ai)</label>
+            <label htmlFor="anthropic">Anthropic API key</label>
             <input
               id="anthropic"
               type="password"
@@ -65,7 +66,7 @@ export function Options() {
             />
           </div>
           <div className="field">
-            <label htmlFor="openai">OpenAI API key (used on chatgpt.com)</label>
+            <label htmlFor="openai">OpenAI API key</label>
             <input
               id="openai"
               type="password"
@@ -74,6 +75,26 @@ export function Options() {
               value={keys.openai ?? ''}
               onChange={e => setKeys({ ...keys, openai: e.target.value })}
             />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Provider</legend>
+          <div className="field">
+            <label htmlFor="provider">Answer questions with</label>
+            <select
+              id="provider"
+              value={models.defaultProvider ?? 'anthropic'}
+              onChange={e =>
+                setModels({ ...models, defaultProvider: e.target.value as Provider })
+              }
+            >
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT)</option>
+            </select>
+            <p className="sub" style={{ marginTop: 6 }}>
+              If the chosen provider has no key set, the other key is used as a fallback.
+            </p>
           </div>
         </fieldset>
 

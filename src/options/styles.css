@@ -71,7 +71,7 @@ label {
   margin-bottom: 6px;
   color: var(--fg-muted);
 }
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -81,7 +81,7 @@ input[type="text"], input[type="password"] {
   font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: 13px;
 }
-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
 .field { margin-bottom: 14px; }
 .field:last-child { margin-bottom: 0; }
 
