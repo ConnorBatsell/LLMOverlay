@@ -23,7 +23,7 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['https://chatgpt.com/*', 'https://claude.ai/*'],
+      matches: ['http://*/*', 'https://*/*'],
       js: ['src/content/index.ts'],
       run_at: 'document_idle'
     }
@@ -49,7 +49,7 @@ export default defineManifest({
         default: 'Ctrl+Shift+E',
         mac: 'Command+Shift+E'
       },
-      description: 'Explain the highlighted passage in the side panel'
+      description: 'Ask about the highlighted text — or the whole page — in the side panel'
     }
   }
 });
